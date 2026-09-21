@@ -9,6 +9,10 @@
 #include <UniversalTelegramBot.h>
 #include <DHT.h>
 
+// ADDED FOR I2C LCD
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
 // WiFi
 char ssid[] = "MM";
 char pass[] = "alss159265769804";
@@ -27,6 +31,9 @@ UniversalTelegramBot bot(BOT_TOKEN, client);
 #define DHTTYPE DHT22
 
 DHT dht(DHTPIN, DHTTYPE);
+
+// ADDED FOR I2C LCD
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 // Power
 #define FAN_POWER_WATTS 10  
@@ -101,6 +108,18 @@ void setup() {
 
     dht.begin();
 
+    // ADDED FOR I2C LCD
+    Wire.begin();
+    lcd.init();
+    lcd.backlight();
+
+    lcd.setCursor(0, 0);
+    lcd.print("Smart AC System");
+    lcd.setCursor(0, 1);
+    lcd.print("Starting...");
+
+    delay(2000);
+
     // WiFi
     WiFi.begin(ssid, pass);
     Serial.print("Connecting WiFi");
@@ -117,6 +136,17 @@ void setup() {
 
     // Blynk
     Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+
+    Serial.println("System Ready");
+
+    // ADDED FOR I2C LCD
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("WiFi Connected");
+    lcd.setCursor(0, 1);
+    lcd.print("System Ready");
+
+    delay(2000);
 
     Serial.println("System Ready");
     delay(30000); // PIR calibration
@@ -168,6 +198,30 @@ void loop() {
 
         Blynk.virtualWrite(V3, motion);
         Blynk.virtualWrite(V4, power);
+
+        // ADDED FOR I2C LCD
+        lcd.clear();
+
+        lcd.setCursor(0, 0);
+        if (!isnan(temp)) {
+            lcd.print("T:");
+            lcd.print(temp, 1);
+            lcd.print((char)223);
+            lcd.print("C ");
+        }
+
+        if (!isnan(hum)) {
+            lcd.print("H:");
+            lcd.print(hum, 0);
+            lcd.print("%");
+        }
+
+        lcd.setCursor(0, 1);
+        lcd.print("M:");
+        lcd.print(motion ? "YES" : "NO");
+
+        lcd.print(" Fan:");
+        lcd.print(relayState ? "ON" : "OFF");
 
         // ---- SERIAL ----
         Serial.println("----- STATUS -----");
